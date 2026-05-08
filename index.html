@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GemoCoin Terminal</title>
+    <title>GemoCoin User Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --neon: #00ff88; --dark: #05070a; }
-        body { background: var(--dark); color: white; font-family: sans-serif; padding-bottom: 80px; overflow-x: hidden; }
+        body { background: var(--dark); color: white; font-family: sans-serif; padding-bottom: 80px; }
         .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; }
         .page { display: none; padding: 20px; }
         .active-page { display: block; }
-        input, select { background: #000; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; color: white; outline: none; }
-        .btn-primary { background: var(--neon); color: black; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; border:none; }
+        input { background: #000; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; color: white; outline: none; }
+        .btn-primary { background: var(--neon); color: black; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; }
         .hidden { display: none !important; }
+        /* Modal Style for Deposit */
+        #deposit-modal { background: rgba(0,0,0,0.9); display:none; position:fixed; inset:0; z-index:100; padding:20px; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
@@ -25,78 +27,72 @@
         <button onclick="showPage('auth')" id="nav-auth-text">👤 LOGIN</button>
     </nav>
 
+    <div id="deposit-modal" onclick="closeModal()">
+        <div class="glass p-8 w-full max-w-sm text-center" onclick="event.stopPropagation()">
+            <h2 class="text-green-500 font-bold mb-4">DEPOSIT FUNDS</h2>
+            <div id="payment-text" class="bg-black/50 p-4 rounded border border-gray-800 text-sm font-mono whitespace-pre-line text-left">Loading method...</div>
+            <p class="text-[10px] text-gray-500 mt-4 italic">Send payment to details above and contact support.</p>
+            <button onclick="closeModal()" class="mt-6 text-red-500 text-xs">CLOSE</button>
+        </div>
+    </div>
+
     <div id="auth" class="page active-page">
         <div id="login-box" class="glass p-8 mt-10">
-            <h2 id="auth-title" class="text-2xl font-black mb-6 text-green-400">GMC TERMINAL</h2>
-            <input type="email" id="email" placeholder="Email Address">
+            <h1 class="text-2xl font-black mb-6 text-green-400 italic text-center">GMC TERMINAL</h1>
+            <input type="email" id="email" placeholder="Email">
             <input type="password" id="pass" placeholder="Password">
-            <button id="auth-btn" class="btn-primary">EXECUTE</button>
-            <p id="toggle-auth" class="text-xs text-center mt-4 text-gray-500 cursor-pointer italic">Switch Login/Register</p>
+            <button id="auth-btn" class="btn-primary">ACCESS</button>
+            <p id="toggle-auth" class="text-xs text-center mt-4 text-gray-500 cursor-pointer italic underline">New User? Register</p>
         </div>
         <div id="profile-box" class="glass p-8 mt-10 hidden text-center">
-            <h2 class="text-xl font-bold text-green-400 mb-4">USER PROFILE</h2>
-            <p id="user-display-email" class="font-mono text-sm mb-4"></p>
-            <button id="logout-btn" class="w-full text-red-500 text-xs border border-red-900/30 p-2 rounded">LOGOUT TERMINAL</button>
+            <h2 class="text-xl font-bold text-green-400 mb-2 italic">ACCOUNT ACTIVE</h2>
+            <p id="user-display-email" class="font-mono text-xs text-gray-400 mb-2"></p>
+            <p id="user-display-id" class="text-[9px] text-gray-600 mb-6 bg-black p-1 rounded"></p>
+            <button id="logout-btn" class="w-full text-red-500 text-xs border border-red-900/30 p-2 rounded">LOGOUT</button>
         </div>
     </div>
 
     <div id="trade" class="page">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold italic">GMC/USDT</h1>
-            <span class="text-green-400 font-mono" id="live-price">$1.2854</span>
-        </div>
-        <div class="glass h-[300px] mb-4 overflow-hidden">
-            <div id="tradingview_chart" style="height: 100%;"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-        </div>
+        <div class="flex justify-between items-center mb-4"><h1 class="font-bold">GMC/USDT</h1><span id="live-price" class="text-green-400 font-mono text-sm">$1.2854</span></div>
+        <div class="glass h-[280px] mb-4 overflow-hidden" id="tradingview_chart"></div>
         <div class="glass p-4">
-            <div class="flex gap-2 mb-4">
-                <button onclick="setOrderType('buy')" id="buy-btn-toggle" class="flex-1 bg-green-600/20 text-green-500 p-2 rounded border border-green-600">BUY</button>
-                <button onclick="setOrderType('sell')" id="sell-btn-toggle" class="flex-1 bg-gray-800 p-2 rounded">SELL</button>
-            </div>
-            <input type="number" id="trade-price" placeholder="Limit Price ($)">
-            <input type="number" id="trade-amount" placeholder="Quantity (GMC)">
+            <input type="number" id="trade-price" placeholder="Limit Price">
+            <input type="number" id="trade-amount" placeholder="Amount GMC">
             <button id="execute-trade-btn" class="btn-primary">PLACE ORDER</button>
         </div>
     </div>
 
-    <div id="wallet" class="page">
-        <div class="glass p-8 mb-4 text-center">
-            <p class="text-[10px] text-gray-500">AVAILABLE BALANCE</p>
-            <h1 class="text-4xl font-black">$<span id="balance">0.00</span></h1>
+    <div id="wallet" class="page text-center">
+        <div class="glass p-10 mb-6">
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Total Assets</p>
+            <h1 class="text-5xl font-black mt-2">$<span id="balance">0.00</span></h1>
         </div>
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <button onclick="alert('Contact Admin for Deposit')" class="glass p-4 text-xs font-bold">📥 DEPOSIT</button>
-            <button onclick="alert('Withdrawal requires KYC Approval')" class="glass p-4 text-xs font-bold">📤 WITHDRAW</button>
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="openDeposit()" class="glass p-6 text-xs font-bold border-green-900/20">📥 DEPOSIT</button>
+            <button onclick="alert('Withdrawals pending KYC approval')" class="glass p-6 text-xs font-bold border-red-900/20">📤 WITHDRAW</button>
         </div>
-        <h3 class="text-xs text-gray-500 mb-2">RECENT ORDERS</h3>
-        <div id="order-history" class="glass p-4 text-[10px] space-y-2"></div>
     </div>
 
     <div id="kyc" class="page">
         <div class="glass p-6">
-            <h2 class="text-green-400 font-bold mb-4">IDENTITY VERIFICATION</h2>
-            <p class="text-xs text-gray-500 mb-4 italic">Please upload front of CNIC.</p>
+            <h2 class="text-green-500 font-bold mb-4">IDENTITY (KYC)</h2>
             <input type="file" id="kyc-file">
-            <button id="kyc-btn" class="btn-primary mt-4">SUBMIT FOR REVIEW</button>
-            <p id="kyc-status" class="text-xs mt-2 text-yellow-500"></p>
+            <button id="kyc-btn" class="btn-primary mt-4">SUBMIT ID</button>
+            <p id="kyc-status" class="text-xs mt-4 text-yellow-500 italic"></p>
         </div>
     </div>
 
     <script type="module" src="app.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
     <script>
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
             document.getElementById(id).classList.add('active-page');
-            if(id === 'trade') loadChart();
+            if(id === 'trade') new TradingView.widget({"autosize": true, "symbol": "BINANCE:BTCUSDT", "theme": "dark", "container_id": "tradingview_chart", "hide_top_toolbar": true});
         }
-        function loadChart() {
-            new TradingView.widget({
-                "autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "D", "theme": "dark", "style": "1",
-                "locale": "en", "container_id": "tradingview_chart", "hide_top_toolbar": true
-            });
-        }
+        function openDeposit() { document.getElementById('deposit-modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('deposit-modal').style.display = 'none'; }
     </script>
 </body>
-    </html>
+                                                                </html>
     
