@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GemoCoin Interstellar Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --neon-green: #00ff88;
+            --neon-red: #ff4444;
+            --bg-dark: #05070a;
+        }
+        body { 
+            background-color: var(--bg-dark); 
+            color: #e0e0e0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .neon-text-green { text-shadow: 0 0 10px var(--neon-green); color: var(--neon-green); }
+        .3d-button {
+            transition: all 0.2s;
+            border-bottom: 4px solid rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .3d-button:active {
+            transform: translateY(2px);
+            border-bottom: 0px;
+        }
+        .chart-placeholder {
+            background: radial-gradient(circle at center, #10141a 0%, #05070a 100%);
+            border-radius: 20px;
+            position: relative;
+        }
+        /* Simple Animation for the "3D" Feel */
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        .pulse { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body class="p-4">
+
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-6 px-4">
+        <div>
+            <h1 class="text-3xl font-black italic tracking-tighter">GEMO<span class="text-green-500">TERMINAL</span></h1>
+            <p class="text-xs text-gray-500 font-mono">CORE_V.2.06_ACTIVE</p>
+        </div>
+        <div class="glass-panel px-6 py-2 rounded-full flex items-center gap-4">
+            <span class="text-xs text-gray-400">BALANCE</span>
+            <span class="font-bold text-white">$5,240.50 <span class="text-gray-500 text-[10px]">USDT</span></span>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-8 space-y-6">
+            <div class="chart-placeholder h-[400px] border border-gray-800 p-6 flex flex-col justify-between overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-xl font-bold">GemoCoin <span class="text-xs font-normal text-gray-500">GMC/USDT</span></h2>
+                        <div class="text-2xl neon-text-green font-mono mt-1">$1.2854</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 text-xs bg-gray-800 rounded">1H</button>
+                        <button class="px-3 py-1 text-xs bg-green-600 rounded">1D</button>
+                    </div>
+                </div>
+                
+                <div class="relative flex-1 flex items-center justify-center">
+                    <div class="absolute inset-0 flex items-end justify-around px-10 opacity-20">
+                        <div class="w-8 bg-green-500 h-32 blur-sm"></div>
+                        <div class="w-8 bg-red-500 h-48 blur-sm"></div>
+                        <div class="w-8 bg-green-500 h-20 blur-sm"></div>
+                    </div>
+                    <p class="text-gray-600 font-mono text-sm uppercase tracking-widest pulse">Holographic Grid Active...</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4">
+                <h3 class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">Active Transmissions (Orders)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm font-mono">
+                        <thead>
+                            <tr class="text-gray-600 border-b border-gray-800">
+                                <th class="pb-2">TIME</th>
+                                <th class="pb-2">TYPE</th>
+                                <th class="pb-2">PRICE</th>
+                                <th class="pb-2">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-list">
+                            <tr class="border-b border-gray-900">
+                                <td class="py-3">09:11:45</td>
+                                <td class="text-green-500 uppercase">Limit Buy</td>
+                                <td>1.1500</td>
+                                <td class="text-yellow-500 italic">Pending...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            
+            <div class="glass-panel rounded-xl p-4 font-mono text-xs">
+                <h3 class="text-gray-500 mb-4 uppercase">Market Depth</h3>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-red-500 opacity-60"><p>1.2910</p><p>4,102</p></div>
+                    <div class="flex justify-between text-red-500"><p>1.2895</p><p>12,500</p></div>
+                    <div class="py-4 text-center border-y border-gray-800 my-2">
+                        <span class="text-xl neon-text-green">$1.2854</span>
+                    </div>
+                    <div class="flex justify-between text-green-500"><p>1.2800</p><p>5,201</p></div>
+                    <div class="flex justify-between text-green-500 opacity-60"><p>1.2750</p><p>1,900</p></div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-6 bg-gradient-to-b from-[#10141a] to-[#05070a]">
+                <div class="flex mb-6 bg-gray-900 p-1 rounded-lg">
+                    <button class="flex-1 py-2 rounded-md bg-green-600 font-bold text-xs">BUY</button>
+                    <button class="flex-1 py-2 rounded-md text-gray-500 font-bold text-xs">SELL</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold uppercase">Target Price (USDT)</label>
+                        <input id="price-input" type="number" value="1.2854" step="0.0001" class="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-green-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold uppercase">Volume (GMC)</label>
+                        <input id="amount-input" type="number" placeholder="0.00" class="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-green-500 outline-none transition-all">
+                    </div>
+                    <button onclick="placeOrder()" class="3d-button w-full bg-green-600 hover:bg-green-500 py-4 rounded-lg font-black text-sm text-black shadow-lg shadow-green-900/20">
+                        Execute Trade
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3H5aQHuX3RTdJgJnSZGYJCRmCI51Mvbg",
+            authDomain: "coin-terminal.firebaseapp.com",
+            projectId: "coin-terminal",
+            storageBucket: "coin-terminal.firebasestorage.app",
+            messagingSenderId: "673812925700",
+            appId: "1:673812925700:web:680ce7d2706d4474941451",
+            measurementId: "G-90D47NFWWC"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to push to Firebase
+        window.placeOrder = async () => {
+            const price = document.getElementById('price-input').value;
+            const amount = document.getElementById('amount-input').value;
+
+            if(!amount || amount <= 0) {
+                alert("Bhai, amount toh daalo!");
+                return;
+            }
+
+            try {
+                const docRef = await addDoc(collection(db, "orders"), {
+                    coin: "GMC",
+                    price: parseFloat(price),
+                    amount: parseFloat(amount),
+                    status: "pending",
+                    timestamp: serverTimestamp()
+                });
+
+                console.log("Transmission Successful. ID: ", docRef.id);
+                alert("Order Placed! Firebase mein check karein.");
+                
+                // Locally add to the list (For visual feedback)
+                const list = document.getElementById('order-list');
+                const row = list.insertRow(0);
+                row.innerHTML = `
+                    <td class="py-3 text-gray-500 italic text-xs">JUST NOW</td>
+                    <td class="text-green-500">LIMIT BUY</td>
+                    <td>${price}</td>
+                    <td class="text-yellow-500 italic">Sending...</td>
+                `;
+
+            } catch (error) {
+                console.error("Transmission Error: ", error);
+                alert("Firebase Error! Rules check karein.");
+            }
+        };
+    </script>
+</body>
+      </html>
+                      
