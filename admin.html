@@ -2,60 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMC Admin Center</title>
+    <title>GMC Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #0a0a0a; color: #eee; font-family: monospace; }
-        .card { background: #111; border: 1px solid #222; border-radius: 8px; padding: 20px; }
-        input, textarea { background: #000; border: 1px solid #333; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; color: #0f0; outline: none; }
-        button { cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .hidden { display: none !important; }
-    </style>
+    <style>body { background: #000; color: #fff; font-family: monospace; }</style>
 </head>
 <body class="p-6">
+    <h1 class="text-green-500 font-bold mb-8 border-b border-gray-800 pb-2">ADMIN COMMAND</h1>
+    
+    <div class="grid gap-6">
+        <div class="bg-zinc-900 p-4 rounded-lg">
+            <h2 class="text-xs text-blue-400 mb-2">PAYMENT DETAILS</h2>
+            <textarea id="pay-input" class="w-full bg-black border border-gray-800 p-2 text-xs h-20" placeholder="JazzCash: 03xx..."></textarea>
+            <button id="save-pay" class="bg-blue-600 w-full p-2 mt-2 rounded text-xs">UPDATE</button>
+        </div>
 
-    <div id="admin-auth" class="max-w-md mx-auto mt-20 card text-center">
-        <h1 class="text-green-500 text-xl mb-6 underline">ADMIN LOGIN</h1>
-        <input type="password" id="admin-pass-input" placeholder="ENTER KEY">
-        <button onclick="checkAdminPass()" class="bg-green-600 text-black w-full p-3 rounded">UNLOCK</button>
-    </div>
+        <div class="bg-zinc-900 p-4 rounded-lg">
+            <h2 class="text-xs text-green-400 mb-2">SET BALANCE</h2>
+            <input type="text" id="uid-input" placeholder="User UID" class="w-full bg-black border border-gray-800 p-2 text-xs mb-2">
+            <input type="number" id="bal-input" placeholder="Amount" class="w-full bg-black border border-gray-800 p-2 text-xs mb-2">
+            <button id="save-bal" class="bg-green-600 w-full p-2 rounded text-xs text-black font-bold">UPDATE BALANCE</button>
+        </div>
 
-    <div id="admin-dashboard" class="hidden">
-        <h1 class="text-2xl font-black text-green-500 mb-8 border-b border-green-900 pb-2 italic text-center">GMC COMMAND CENTER</h1>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <div class="card border-l-4 border-l-purple-600">
-                <h2 class="text-purple-500 font-bold mb-4 uppercase">Set Deposit Payment Method</h2>
-                <p class="text-[10px] text-gray-500 mb-2">Write payment details (e.g. JazzCash: 03xx-xxxxxx)</p>
-                <textarea id="pay-details" rows="4" placeholder="Enter JazzCash, EasyPaisa or USDT Address details..."></textarea>
-                <button onclick="updatePaymentMethod()" class="bg-purple-700 w-full p-3 rounded text-sm">UPDATE DEPOSIT INFO</button>
-            </div>
-
-            <div class="card border-l-4 border-l-blue-600">
-                <h2 class="text-blue-500 font-bold mb-4 uppercase">Manage User Balance</h2>
-                <input type="text" id="target-uid" placeholder="User UID">
-                <input type="number" id="target-amount" placeholder="New Balance">
-                <button onclick="updateBalance()" class="bg-blue-700 w-full p-3 rounded text-sm">SET BALANCE</button>
-            </div>
-
-            <div class="card border-l-4 border-l-yellow-600">
-                <h2 class="text-yellow-500 font-bold mb-4 uppercase">Pending KYC</h2>
-                <div id="kyc-container" class="space-y-4 max-h-48 overflow-y-auto"></div>
-            </div>
-
-            <div class="card border-l-4 border-l-green-600">
-                <h2 class="text-green-500 font-bold mb-4 uppercase">Live Trades</h2>
-                <div id="orders-container" class="text-[10px] space-y-2"></div>
-            </div>
-
+        <div class="bg-zinc-900 p-4 rounded-lg">
+            <h2 class="text-xs text-yellow-400 mb-2">KYC REQUESTS</h2>
+            <div id="kyc-list" class="space-y-2 text-[10px]"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD3H5aQHuX3RTdJgJnSZGYJCRmCI51Mvbg",
@@ -68,59 +44,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.checkAdminPass = () => {
-            if(document.getElementById('admin-pass-input').value === '786786') {
-                document.getElementById('admin-auth').classList.add('hidden');
-                document.getElementById('admin-dashboard').classList.remove('hidden');
-                loadAdminData();
-            } else { alert("WRONG KEY"); }
+        document.getElementById('save-pay').onclick = async () => {
+            const val = document.getElementById('pay-input').value;
+            await setDoc(doc(db, "settings", "payment_info"), { text: val });
+            alert("Payment Method Updated!");
         };
 
-        // NEW: Update Payment Method Function
-        window.updatePaymentMethod = async () => {
-            const details = document.getElementById('pay-details').value;
-            if(!details) return alert("Kuch likho toh sahi!");
-            try {
-                await setDoc(doc(db, "settings", "payment_info"), { text: details });
-                alert("Payment Method Updated for Users!");
-            } catch (e) { alert("Error: " + e.message); }
+        document.getElementById('save-bal').onclick = async () => {
+            const uid = document.getElementById('uid-input').value;
+            const bal = document.getElementById('bal-input').value;
+            await setDoc(doc(db, "users", uid), { balance: parseFloat(bal) }, {merge:true});
+            alert("Balance Updated!");
         };
 
-        window.updateBalance = async () => {
-            const uid = document.getElementById('target-uid').value;
-            const amt = document.getElementById('target-amount').value;
-            await setDoc(doc(db, "users", uid), { balance: parseFloat(amt) }, { merge: true });
-            alert("Done!");
-        };
-
-        function loadAdminData() {
-            onSnapshot(collection(db, "kyc"), (snap) => {
-                const cont = document.getElementById('kyc-container');
-                cont.innerHTML = "";
-                snap.forEach(d => {
-                    cont.innerHTML += `<div class="bg-black p-2 border border-gray-800 text-[10px]">
-                        <p>User: ${d.data().email}</p>
-                        <a href="${d.data().url}" target="_blank" class="text-blue-500 underline">VIEW ID</a>
-                        <button onclick="approveKYC('${d.id}')" class="ml-4 text-green-500">[APPROVE]</button>
-                    </div>`;
-                });
+        onSnapshot(collection(db, "kyc"), snap => {
+            const list = document.getElementById('kyc-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const k = d.data();
+                list.innerHTML += `<div class="bg-black p-2 border border-gray-800">
+                    User: ${k.email} <br>
+                    <a href="${k.url}" target="_blank" class="text-blue-500 underline">VIEW ID</a>
+                    <button onclick="approveKYC('${d.id}')" class="ml-4 text-green-500">[APPROVE]</button>
+                </div>`;
             });
-            onSnapshot(collection(db, "orders"), (snap) => {
-                const cont = document.getElementById('orders-container');
-                cont.innerHTML = "";
-                snap.forEach(d => {
-                    const o = d.data();
-                    cont.innerHTML += `<div class="flex justify-between border-b border-gray-900 pb-1">
-                        <span class="${o.type==='buy'?'text-green-500':'text-red-500'}">${o.type}</span>
-                        <span>$${o.price}</span>
-                        <button onclick="deleteOrder('${d.id}')">❌</button>
-                    </div>`;
-                });
-            });
-        }
-        window.deleteOrder = async (id) => { await deleteDoc(doc(db, "orders", id)); };
-        window.approveKYC = async (id) => { await updateDoc(doc(db, "kyc", id), { status: "Approved" }); alert("Approved!"); };
+        });
     </script>
 </body>
-    </html>
-    
+</html>
