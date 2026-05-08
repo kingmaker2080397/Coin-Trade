@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GemoCoin Master Terminal</title>
+    <title>GemoCoin Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --neon: #00ff88; --dark: #05070a; }
-        body { background: var(--dark); color: white; font-family: sans-serif; padding-bottom: 80px; }
+        body { background: var(--dark); color: white; font-family: sans-serif; padding-bottom: 80px; overflow-x: hidden; }
         .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; }
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .page { display: none; padding: 20px; }
         .active-page { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        input { background: #000; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 15px; color: white; outline: none; }
-        input:focus { border-color: var(--neon); }
-        .btn-primary { background: var(--neon); color: black; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; }
+        input, select { background: #000; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; color: white; outline: none; }
+        .btn-primary { background: var(--neon); color: black; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; border:none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -23,157 +22,80 @@
         <button onclick="showPage('trade')">📊 TRADE</button>
         <button onclick="showPage('wallet')">💰 WALLET</button>
         <button onclick="showPage('kyc')">🆔 KYC</button>
-        <button onclick="showPage('refer')">👥 REFER</button>
-        <button onclick="showPage('auth')" id="nav-auth">👤 LOGIN</button>
+        <button onclick="showPage('auth')" id="nav-auth-text">👤 LOGIN</button>
     </nav>
 
     <div id="auth" class="page active-page">
-        <div class="glass p-8 mt-10">
-            <h2 id="auth-title" class="text-2xl font-black mb-6 text-green-400 uppercase italic">Access Terminal</h2>
-            <input type="email" id="email" placeholder="Email">
+        <div id="login-box" class="glass p-8 mt-10">
+            <h2 id="auth-title" class="text-2xl font-black mb-6 text-green-400">GMC TERMINAL</h2>
+            <input type="email" id="email" placeholder="Email Address">
             <input type="password" id="pass" placeholder="Password">
-            <button onclick="handleAuth()" class="btn-primary">EXECUTE</button>
-            <p onclick="toggleAuth()" class="text-xs text-center mt-4 text-gray-500 cursor-pointer">Switch Login/Register</p>
-            <p onclick="forgotPass()" class="text-[10px] text-center mt-2 text-blue-400 cursor-pointer italic">Forgot Password?</p>
+            <button id="auth-btn" class="btn-primary">EXECUTE</button>
+            <p id="toggle-auth" class="text-xs text-center mt-4 text-gray-500 cursor-pointer italic">Switch Login/Register</p>
+        </div>
+        <div id="profile-box" class="glass p-8 mt-10 hidden text-center">
+            <h2 class="text-xl font-bold text-green-400 mb-4">USER PROFILE</h2>
+            <p id="user-display-email" class="font-mono text-sm mb-4"></p>
+            <button id="logout-btn" class="w-full text-red-500 text-xs border border-red-900/30 p-2 rounded">LOGOUT TERMINAL</button>
         </div>
     </div>
 
     <div id="trade" class="page">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold">GMC/USDT</h1>
+            <h1 class="text-xl font-bold italic">GMC/USDT</h1>
             <span class="text-green-400 font-mono" id="live-price">$1.2854</span>
         </div>
-        <div class="glass h-48 mb-4 flex items-center justify-center italic text-gray-600">3D Chart Area</div>
+        <div class="glass h-[300px] mb-4 overflow-hidden">
+            <div id="tradingview_chart" style="height: 100%;"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+        </div>
         <div class="glass p-4">
-            <input type="number" id="trade-amount" placeholder="Amount GMC">
-            <button onclick="placeOrder()" class="btn-primary">BUY GMC</button>
+            <div class="flex gap-2 mb-4">
+                <button onclick="setOrderType('buy')" id="buy-btn-toggle" class="flex-1 bg-green-600/20 text-green-500 p-2 rounded border border-green-600">BUY</button>
+                <button onclick="setOrderType('sell')" id="sell-btn-toggle" class="flex-1 bg-gray-800 p-2 rounded">SELL</button>
+            </div>
+            <input type="number" id="trade-price" placeholder="Limit Price ($)">
+            <input type="number" id="trade-amount" placeholder="Quantity (GMC)">
+            <button id="execute-trade-btn" class="btn-primary">PLACE ORDER</button>
         </div>
     </div>
 
     <div id="wallet" class="page">
-        <div class="glass p-6 mb-4 bg-gradient-to-br from-green-900/20 to-transparent">
-            <p class="text-xs text-gray-400">AVAILABLE BALANCE</p>
-            <h1 class="text-4xl font-black text-white">$<span id="balance">0.00</span></h1>
+        <div class="glass p-8 mb-4 text-center">
+            <p class="text-[10px] text-gray-500">AVAILABLE BALANCE</p>
+            <h1 class="text-4xl font-black">$<span id="balance">0.00</span></h1>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-6">
-            <button class="glass p-4 text-xs font-bold bg-green-900/10">📥 DEPOSIT</button>
-            <button class="glass p-4 text-xs font-bold bg-red-900/10">📤 WITHDRAW</button>
+            <button onclick="alert('Contact Admin for Deposit')" class="glass p-4 text-xs font-bold">📥 DEPOSIT</button>
+            <button onclick="alert('Withdrawal requires KYC Approval')" class="glass p-4 text-xs font-bold">📤 WITHDRAW</button>
         </div>
-        <h3 class="text-xs font-bold text-gray-500 mb-2">HISTORY</h3>
-        <div id="history" class="text-[10px] font-mono space-y-2"></div>
+        <h3 class="text-xs text-gray-500 mb-2">RECENT ORDERS</h3>
+        <div id="order-history" class="glass p-4 text-[10px] space-y-2"></div>
     </div>
 
     <div id="kyc" class="page">
         <div class="glass p-6">
-            <h2 class="text-green-400 font-bold mb-4 italic text-lg">IDENTITY VERIFICATION</h2>
-            <p class="text-xs text-gray-400 mb-6">Upload clear photo of your CNIC front.</p>
-            <input type="file" id="kyc-file" class="text-xs">
-            <button onclick="uploadKYC()" class="btn-primary mt-4">SUBMIT DOCUMENTS</button>
-            <p id="kyc-status" class="text-xs mt-4"></p>
+            <h2 class="text-green-400 font-bold mb-4">IDENTITY VERIFICATION</h2>
+            <p class="text-xs text-gray-500 mb-4 italic">Please upload front of CNIC.</p>
+            <input type="file" id="kyc-file">
+            <button id="kyc-btn" class="btn-primary mt-4">SUBMIT FOR REVIEW</button>
+            <p id="kyc-status" class="text-xs mt-2 text-yellow-500"></p>
         </div>
     </div>
 
-    <div id="refer" class="page">
-        <div class="glass p-6 text-center">
-            <h2 class="text-green-400 font-bold mb-2">INVITE & EARN</h2>
-            <p class="text-xs text-gray-400 mb-6">Get $5 for every friend you invite.</p>
-            <div class="bg-black p-4 rounded border border-dashed border-gray-700 font-mono text-lg mb-4">GMC-786-WIN</div>
-            <button class="btn-primary">COPY LINK</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD3H5aQHuX3RTdJgJnSZGYJCRmCI51Mvbg",
-            authDomain: "coin-terminal.firebaseapp.com",
-            projectId: "coin-terminal",
-            storageBucket: "coin-terminal.firebasestorage.app",
-            messagingSenderId: "673812925700",
-            appId: "1:673812925700:web:680ce7d2706d4474941451",
-            measurementId: "G-90D47NFWWC"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // --- NAVIGATION LOGIC ---
-        window.showPage = (pageId) => {
+    <script type="module" src="app.js"></script>
+    <script>
+        function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.getElementById(pageId).classList.add('active-page');
-        };
-
-        // --- AUTH LOGIC ---
-        let isLogin = true;
-        window.toggleAuth = () => {
-            isLogin = !isLogin;
-            document.getElementById('auth-title').innerText = isLogin ? "Access Terminal" : "Register Pilot";
-        };
-
-        window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-            try {
-                if(isLogin) await signInWithEmailAndPassword(auth, email, pass);
-                else await createUserWithEmailAndPassword(auth, email, pass);
-                alert("Success!");
-                showPage('trade');
-            } catch (e) { alert(e.message); }
-        };
-
-        window.forgotPass = () => {
-            const email = document.getElementById('email').value;
-            if(!email) return alert("Email likho pehle!");
-            sendPasswordResetEmail(auth, email).then(() => alert("Reset link sent!"));
-        };
-
-        // --- KYC LOGIC (ImgBB) ---
-        window.uploadKYC = async () => {
-            const file = document.getElementById('kyc-file').files[0];
-            const status = document.getElementById('kyc-status');
-            if(!file) return alert("File select karein");
-            
-            status.innerText = "Uploading to ImgBB...";
-            const formData = new FormData();
-            formData.append("image", file);
-
-            const res = await fetch("https://api.imgbb.com/1/upload?key=a25b5bea8eb38a1ecf4f04154d85a4bf", {
-                method: "POST",
-                body: formData
+            document.getElementById(id).classList.add('active-page');
+            if(id === 'trade') loadChart();
+        }
+        function loadChart() {
+            new TradingView.widget({
+                "autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "D", "theme": "dark", "style": "1",
+                "locale": "en", "container_id": "tradingview_chart", "hide_top_toolbar": true
             });
-            const data = await res.json();
-            
-            if(data.success) {
-                await addDoc(collection(db, "kyc"), {
-                    uid: auth.currentUser.uid,
-                    url: data.data.url,
-                    time: serverTimestamp()
-                });
-                status.innerText = "KYC Submitted!";
-            }
-        };
-
-        // --- REALTIME DATA ---
-        onAuthStateChanged(auth, user => {
-            if(user) {
-                document.getElementById('nav-auth').innerText = "👤 PROFILE";
-                // Balance listener
-                onSnapshot(doc(db, "users", user.uid), (d) => {
-                    if(d.exists()) document.getElementById('balance').innerText = d.data().balance;
-                });
-            }
-        });
-
-        // Simple Live Price Simulation
-        setInterval(() => {
-            let p = (1.28 + Math.random() * 0.05).toFixed(4);
-            document.getElementById('live-price').innerText = "$" + p;
-        }, 3000);
-
+        }
     </script>
 </body>
     </html>
