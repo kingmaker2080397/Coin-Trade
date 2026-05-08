@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin GMC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white p-6">
+    <h1 class="text-2xl font-bold text-green-500 mb-6">ADMIN TERMINAL</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+            <h2 class="mb-4 font-bold border-b border-gray-700">KYC PENDING</h2>
+            <div id="kyc-list" class="space-y-4"></div>
+        </div>
+
+        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+            <h2 class="mb-4 font-bold border-b border-gray-700">MANAGE BALANCE</h2>
+            <input type="text" id="uid" placeholder="User UID" class="w-full bg-black border border-gray-700 p-2 rounded mb-2">
+            <input type="number" id="amt" placeholder="New Balance" class="w-full bg-black border border-gray-700 p-2 rounded mb-2">
+            <button id="up-btn" class="bg-green-600 w-full p-2 rounded font-bold">SET BALANCE</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = { /* USE SAME CONFIG FROM APP.JS */ 
+            apiKey: "AIzaSyD3H5aQHuX3RTdJgJnSZGYJCRmCI51Mvbg",
+            authDomain: "coin-terminal.firebaseapp.com",
+            projectId: "coin-terminal",
+            storageBucket: "coin-terminal.firebasestorage.app",
+            messagingSenderId: "673812925700",
+            appId: "1:673812925700:web:680ce7d2706d4474941451"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        onSnapshot(collection(db, "kyc"), snap => {
+            const list = document.getElementById('kyc-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const k = d.data();
+                list.innerHTML += `<div class="bg-black p-3 rounded text-[10px]">
+                    <p>UID: ${k.uid}</p>
+                    <a href="${k.url}" target="_blank" class="text-blue-500">View ID</a>
+                </div>`;
+            });
+        });
+
+        document.getElementById('up-btn').onclick = async () => {
+            const uid = document.getElementById('uid').value;
+            const amt = document.getElementById('amt').value;
+            await setDoc(doc(db, "users", uid), { balance: parseFloat(amt) }, { merge: true });
+            alert("Updated!");
+        };
+    </script>
+</body>
+</html>
