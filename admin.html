@@ -2,31 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin GMC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMC Admin Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0a0a0a; color: #eee; font-family: monospace; }
+        .card { background: #111; border: 1px solid #222; border-radius: 8px; padding: 20px; }
+        input, textarea { background: #000; border: 1px solid #333; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; color: #0f0; outline: none; }
+        button { cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="bg-black text-white p-6">
-    <h1 class="text-2xl font-bold text-green-500 mb-6">ADMIN TERMINAL</h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
-            <h2 class="mb-4 font-bold border-b border-gray-700">KYC PENDING</h2>
-            <div id="kyc-list" class="space-y-4"></div>
-        </div>
+<body class="p-6">
 
-        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
-            <h2 class="mb-4 font-bold border-b border-gray-700">MANAGE BALANCE</h2>
-            <input type="text" id="uid" placeholder="User UID" class="w-full bg-black border border-gray-700 p-2 rounded mb-2">
-            <input type="number" id="amt" placeholder="New Balance" class="w-full bg-black border border-gray-700 p-2 rounded mb-2">
-            <button id="up-btn" class="bg-green-600 w-full p-2 rounded font-bold">SET BALANCE</button>
+    <div id="admin-auth" class="max-w-md mx-auto mt-20 card text-center">
+        <h1 class="text-green-500 text-xl mb-6 underline">ADMIN LOGIN</h1>
+        <input type="password" id="admin-pass-input" placeholder="ENTER KEY">
+        <button onclick="checkAdminPass()" class="bg-green-600 text-black w-full p-3 rounded">UNLOCK</button>
+    </div>
+
+    <div id="admin-dashboard" class="hidden">
+        <h1 class="text-2xl font-black text-green-500 mb-8 border-b border-green-900 pb-2 italic text-center">GMC COMMAND CENTER</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="card border-l-4 border-l-purple-600">
+                <h2 class="text-purple-500 font-bold mb-4 uppercase">Set Deposit Payment Method</h2>
+                <p class="text-[10px] text-gray-500 mb-2">Write payment details (e.g. JazzCash: 03xx-xxxxxx)</p>
+                <textarea id="pay-details" rows="4" placeholder="Enter JazzCash, EasyPaisa or USDT Address details..."></textarea>
+                <button onclick="updatePaymentMethod()" class="bg-purple-700 w-full p-3 rounded text-sm">UPDATE DEPOSIT INFO</button>
+            </div>
+
+            <div class="card border-l-4 border-l-blue-600">
+                <h2 class="text-blue-500 font-bold mb-4 uppercase">Manage User Balance</h2>
+                <input type="text" id="target-uid" placeholder="User UID">
+                <input type="number" id="target-amount" placeholder="New Balance">
+                <button onclick="updateBalance()" class="bg-blue-700 w-full p-3 rounded text-sm">SET BALANCE</button>
+            </div>
+
+            <div class="card border-l-4 border-l-yellow-600">
+                <h2 class="text-yellow-500 font-bold mb-4 uppercase">Pending KYC</h2>
+                <div id="kyc-container" class="space-y-4 max-h-48 overflow-y-auto"></div>
+            </div>
+
+            <div class="card border-l-4 border-l-green-600">
+                <h2 class="text-green-500 font-bold mb-4 uppercase">Live Trades</h2>
+                <div id="orders-container" class="text-[10px] space-y-2"></div>
+            </div>
+
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { /* USE SAME CONFIG FROM APP.JS */ 
+        const firebaseConfig = {
             apiKey: "AIzaSyD3H5aQHuX3RTdJgJnSZGYJCRmCI51Mvbg",
             authDomain: "coin-terminal.firebaseapp.com",
             projectId: "coin-terminal",
@@ -37,24 +68,59 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        onSnapshot(collection(db, "kyc"), snap => {
-            const list = document.getElementById('kyc-list');
-            list.innerHTML = "";
-            snap.forEach(d => {
-                const k = d.data();
-                list.innerHTML += `<div class="bg-black p-3 rounded text-[10px]">
-                    <p>UID: ${k.uid}</p>
-                    <a href="${k.url}" target="_blank" class="text-blue-500">View ID</a>
-                </div>`;
-            });
-        });
-
-        document.getElementById('up-btn').onclick = async () => {
-            const uid = document.getElementById('uid').value;
-            const amt = document.getElementById('amt').value;
-            await setDoc(doc(db, "users", uid), { balance: parseFloat(amt) }, { merge: true });
-            alert("Updated!");
+        window.checkAdminPass = () => {
+            if(document.getElementById('admin-pass-input').value === '786786') {
+                document.getElementById('admin-auth').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                loadAdminData();
+            } else { alert("WRONG KEY"); }
         };
+
+        // NEW: Update Payment Method Function
+        window.updatePaymentMethod = async () => {
+            const details = document.getElementById('pay-details').value;
+            if(!details) return alert("Kuch likho toh sahi!");
+            try {
+                await setDoc(doc(db, "settings", "payment_info"), { text: details });
+                alert("Payment Method Updated for Users!");
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        window.updateBalance = async () => {
+            const uid = document.getElementById('target-uid').value;
+            const amt = document.getElementById('target-amount').value;
+            await setDoc(doc(db, "users", uid), { balance: parseFloat(amt) }, { merge: true });
+            alert("Done!");
+        };
+
+        function loadAdminData() {
+            onSnapshot(collection(db, "kyc"), (snap) => {
+                const cont = document.getElementById('kyc-container');
+                cont.innerHTML = "";
+                snap.forEach(d => {
+                    cont.innerHTML += `<div class="bg-black p-2 border border-gray-800 text-[10px]">
+                        <p>User: ${d.data().email}</p>
+                        <a href="${d.data().url}" target="_blank" class="text-blue-500 underline">VIEW ID</a>
+                        <button onclick="approveKYC('${d.id}')" class="ml-4 text-green-500">[APPROVE]</button>
+                    </div>`;
+                });
+            });
+            onSnapshot(collection(db, "orders"), (snap) => {
+                const cont = document.getElementById('orders-container');
+                cont.innerHTML = "";
+                snap.forEach(d => {
+                    const o = d.data();
+                    cont.innerHTML += `<div class="flex justify-between border-b border-gray-900 pb-1">
+                        <span class="${o.type==='buy'?'text-green-500':'text-red-500'}">${o.type}</span>
+                        <span>$${o.price}</span>
+                        <button onclick="deleteOrder('${d.id}')">❌</button>
+                    </div>`;
+                });
+            });
+        }
+        window.deleteOrder = async (id) => { await deleteDoc(doc(db, "orders", id)); };
+        window.approveKYC = async (id) => { await updateDoc(doc(db, "kyc", id), { status: "Approved" }); alert("Approved!"); };
     </script>
 </body>
-</html>
+    </html>
+    
